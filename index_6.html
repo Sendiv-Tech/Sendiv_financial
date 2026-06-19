@@ -1,0 +1,1159 @@
+<style>
+  :root{
+    --bg:#0F1115;
+    --bg-soft:#15181E;
+    --bg-card:#1A1E26;
+    --line:#272C36;
+    --ink:#ECEEF2;
+    --ink-dim:#9BA1AE;
+    --ink-faint:#5C6270;
+    --income:#6366F1;
+    --income-soft:#6366F11A;
+    --expense:#F2545B;
+    --expense-soft:#F2545B1A;
+    --good:#34D399;
+    --warn:#FBBF24;
+    --radius:14px;
+    --font-display:'Space Grotesk',Arial,sans-serif;
+    --font-body:'Inter',Arial,sans-serif;
+    --font-mono:'IBM Plex Mono',monospace;
+  }
+
+  *{box-sizing:border-box;}
+  .stf-root{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    min-height:100%;
+    width:100%;
+    padding:0;
+    position:relative;
+  }
+  .stf-root *{font-family:inherit;}
+
+  /* ---------- top bar ---------- */
+  .stf-topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 22px;
+    border-bottom:1px solid var(--line);
+    background:var(--bg-soft);
+    position:sticky;top:0;z-index:20;
+    flex-wrap:wrap;gap:12px;
+  }
+  .stf-brand{display:flex;align-items:center;gap:10px;}
+  .stf-mark{
+    width:30px;height:30px;border-radius:8px;
+    background:linear-gradient(135deg,var(--income),#8284F5);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);font-weight:700;font-size:14px;color:#fff;
+    flex-shrink:0;
+  }
+  .stf-brand-text{display:flex;flex-direction:column;line-height:1.1;}
+  .stf-brand-text b{font-family:var(--font-display);font-size:15px;letter-spacing:0.2px;}
+  .stf-brand-text span{font-size:11px;color:var(--ink-faint);letter-spacing:0.4px;}
+
+  .stf-nav{display:flex;gap:6px;background:var(--bg-card);border:1px solid var(--line);border-radius:10px;padding:4px;}
+  .stf-nav button{
+    background:transparent;border:none;color:var(--ink-dim);
+    font-size:13px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;
+    transition:background .15s,color .15s;white-space:nowrap;
+  }
+  .stf-nav button.active{background:var(--income);color:#fff;}
+  .stf-nav button:not(.active):hover{background:var(--line);color:var(--ink);}
+
+  .stf-topbar-right{display:flex;align-items:center;gap:10px;}
+  .stf-balance-pill{
+    font-family:var(--font-mono);font-size:13px;
+    background:var(--bg-card);border:1px solid var(--line);
+    padding:7px 12px;border-radius:10px;color:var(--ink-dim);
+  }
+  .stf-balance-pill b{color:var(--good);font-weight:600;}
+  .stf-balance-pill b.neg{color:var(--expense);}
+
+  /* ---------- layout ---------- */
+  .stf-body{padding:22px;max-width:1180px;margin:0 auto;}
+  .stf-page{display:none;}
+  .stf-page.active{display:block;animation:stfFade .25s ease;}
+  @keyframes stfFade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  .stf-page-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;flex-wrap:wrap;gap:12px;}
+  .stf-page-head h1{font-family:var(--font-display);font-size:22px;margin:0 0 4px;}
+  .stf-page-head p{font-size:13px;color:var(--ink-dim);margin:0;max-width:480px;}
+
+  .stf-btn{
+    background:var(--income);color:#fff;border:none;border-radius:10px;
+    padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;
+    display:inline-flex;align-items:center;gap:6px;transition:filter .15s, transform .1s;
+  }
+  .stf-btn:hover{filter:brightness(1.1);}
+  .stf-btn:active{transform:scale(.98);}
+  .stf-btn.expense{background:var(--expense);}
+  .stf-btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink-dim);}
+  .stf-btn.ghost:hover{border-color:var(--ink-faint);color:var(--ink);}
+  .stf-btn.small{padding:7px 12px;font-size:12px;}
+  .stf-btn:disabled{opacity:.5;cursor:not-allowed;}
+
+  .stf-actions-row{display:flex;gap:8px;flex-wrap:wrap;}
+
+  /* ---------- stat cards ---------- */
+  .stf-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+  @media (max-width:760px){.stf-stat-grid{grid-template-columns:repeat(2,1fr);}}
+  .stf-stat{
+    background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;position:relative;overflow:hidden;
+  }
+  .stf-stat .label{font-size:11px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;}
+  .stf-stat .value{font-family:var(--font-display);font-size:24px;font-weight:600;}
+  .stf-stat .value.expense{color:var(--expense);}
+  .stf-stat .value.income{color:var(--income);}
+  .stf-stat .value.good{color:var(--good);}
+  .stf-stat .sub{font-size:11px;color:var(--ink-faint);margin-top:6px;}
+
+  /* ---------- the ledger spine ---------- */
+  .stf-ledger{
+    background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);
+    overflow:hidden;margin-bottom:22px;
+  }
+  .stf-ledger-head{
+    display:grid;grid-template-columns:90px 1fr 130px 130px 90px 76px;
+    padding:12px 16px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;
+    color:var(--ink-faint);border-bottom:1px solid var(--line);gap:8px;
+  }
+  .stf-ledger-row{
+    display:grid;grid-template-columns:90px 1fr 130px 130px 90px 76px;
+    padding:13px 16px;font-size:13px;align-items:center;gap:8px;
+    border-bottom:1px solid var(--line);position:relative;
+  }
+  .stf-ledger-row:last-child{border-bottom:none;}
+  .stf-ledger-row:hover{background:var(--bg-soft);}
+  .stf-ledger-row .spine-tick{
+    position:absolute;left:0;top:0;bottom:0;width:3px;
+  }
+  .stf-ledger-row .spine-tick.income{background:var(--income);}
+  .stf-ledger-row .spine-tick.expense{background:var(--expense);}
+  .stf-ledger-date{color:var(--ink-faint);font-family:var(--font-mono);font-size:12px;}
+  .stf-ledger-main b{display:block;font-size:13px;}
+  .stf-ledger-main span{display:block;font-size:11.5px;color:var(--ink-faint);margin-top:2px;}
+  .stf-tag{
+    display:inline-block;font-size:10.5px;padding:3px 8px;border-radius:6px;
+    background:var(--bg-soft);color:var(--ink-dim);border:1px solid var(--line);
+  }
+  .stf-receipt-chip{
+    display:inline-flex;align-items:center;gap:4px;font-size:10.5px;padding:3px 8px;border-radius:6px;
+    background:var(--income-soft);color:var(--income);border:1px solid #6366F133;margin-top:4px;cursor:pointer;
+  }
+  .stf-receipt-chip:hover{filter:brightness(1.2);}
+  .stf-amount{font-family:var(--font-mono);font-weight:600;text-align:right;}
+  .stf-amount.expense{color:var(--expense);}
+  .stf-amount.income{color:var(--good);}
+  .stf-status-pill{
+    font-size:10.5px;padding:3px 9px;border-radius:20px;text-align:center;font-weight:600;display:inline-block;
+  }
+  .stf-status-pill.paid{background:#34D39922;color:var(--good);}
+  .stf-status-pill.pending{background:#FBBF2422;color:var(--warn);}
+  .stf-status-pill.partial{background:#6366F122;color:var(--income);}
+  .stf-row-actions{display:flex;gap:2px;justify-content:flex-end;}
+  .stf-row-btn{background:transparent;border:none;color:var(--ink-faint);cursor:pointer;font-size:14px;padding:5px;border-radius:6px;line-height:1;}
+  .stf-row-btn:hover{color:var(--income);background:var(--income-soft);}
+  .stf-row-btn.del:hover{color:var(--expense);background:var(--expense-soft);}
+
+  .stf-empty{padding:48px 20px;text-align:center;color:var(--ink-faint);}
+  .stf-empty .glyph{font-size:28px;margin-bottom:10px;opacity:.5;}
+  .stf-empty b{display:block;color:var(--ink-dim);font-size:14px;margin-bottom:4px;}
+  .stf-empty span{font-size:12.5px;}
+
+  /* ---------- charts section ---------- */
+  .stf-chart-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;margin-bottom:22px;}
+  @media (max-width:860px){.stf-chart-grid{grid-template-columns:1fr;}}
+  .stf-card{background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;}
+  .stf-card h3{font-family:var(--font-display);font-size:14px;margin:0 0 14px;font-weight:600;}
+  .stf-card h3 span{color:var(--ink-faint);font-weight:400;font-size:12px;display:block;margin-top:2px;font-family:var(--font-body);}
+
+  .stf-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;}
+  .stf-legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-dim);}
+  .stf-legend-dot{width:9px;height:9px;border-radius:3px;flex-shrink:0;}
+
+  .stf-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .stf-bar-row .bar-label{width:90px;font-size:12px;color:var(--ink-dim);flex-shrink:0;}
+  .stf-bar-track{flex:1;height:18px;background:var(--bg-soft);border-radius:6px;overflow:hidden;display:flex;}
+  .stf-bar-fill{height:100%;border-radius:6px;transition:width .4s ease;}
+  .stf-bar-val{width:80px;text-align:right;font-family:var(--font-mono);font-size:12px;color:var(--ink-dim);flex-shrink:0;}
+
+  /* ---------- forms / modal ---------- */
+  .stf-overlay{
+    position:fixed;inset:0;background:rgba(8,9,12,.7);backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;z-index:100;padding:20px;
+  }
+  .stf-overlay.show{display:flex;}
+  .stf-modal{
+    background:var(--bg-card);border:1px solid var(--line);border-radius:16px;
+    padding:24px;max-width:460px;width:100%;max-height:88vh;overflow-y:auto;
+  }
+  .stf-modal h2{font-family:var(--font-display);font-size:17px;margin:0 0 16px;}
+  .stf-field{margin-bottom:14px;}
+  .stf-field label{display:block;font-size:12px;color:var(--ink-dim);margin-bottom:6px;font-weight:600;}
+  .stf-field input,.stf-field select,.stf-field textarea{
+    width:100%;background:var(--bg-soft);border:1px solid var(--line);border-radius:9px;
+    padding:10px 12px;color:var(--ink);font-size:13px;outline:none;
+  }
+  .stf-field input:focus,.stf-field select:focus,.stf-field textarea:focus{border-color:var(--income);}
+  .stf-field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .stf-modal-actions{display:flex;gap:8px;margin-top:18px;justify-content:flex-end;}
+
+  .stf-file-zone{
+    border:1.5px dashed var(--line);border-radius:10px;padding:14px;text-align:center;
+    color:var(--ink-faint);font-size:12px;cursor:pointer;transition:border-color .15s;position:relative;
+  }
+  .stf-file-zone:hover{border-color:var(--income);color:var(--ink-dim);}
+  .stf-file-zone input{display:none;}
+  .stf-file-preview{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:var(--ink-dim);background:var(--bg-soft);border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
+  .stf-file-preview img{width:34px;height:34px;object-fit:cover;border-radius:6px;flex-shrink:0;}
+  .stf-file-preview .pdf-ic{width:34px;height:34px;border-radius:6px;background:var(--expense-soft);color:var(--expense);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+  .stf-file-preview .fname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .stf-file-preview .frem{cursor:pointer;color:var(--ink-faint);}
+  .stf-file-preview .frem:hover{color:var(--expense);}
+
+  .stf-payment-block{
+    background:var(--bg-soft);border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:10px;
+  }
+  .stf-payment-block .ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .stf-payment-block .ph b{font-size:12.5px;}
+  .stf-payment-block .ph .pamt{font-family:var(--font-mono);font-size:11px;color:var(--ink-faint);}
+  .stf-remove-pay{background:transparent;border:none;color:var(--ink-faint);cursor:pointer;font-size:12px;}
+  .stf-remove-pay:hover{color:var(--expense);}
+  .stf-add-pay-btn{
+    width:100%;background:transparent;border:1.5px dashed var(--line);color:var(--ink-dim);
+    border-radius:10px;padding:10px;font-size:12.5px;cursor:pointer;margin-bottom:6px;font-weight:600;
+  }
+  .stf-add-pay-btn:hover{border-color:var(--income);color:var(--income);}
+  .stf-add-pay-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .stf-pay-summary{font-size:11.5px;color:var(--ink-faint);margin-top:-6px;margin-bottom:14px;}
+
+  .stf-toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--bg-card);border:1px solid var(--line);color:var(--ink);
+    padding:11px 18px;border-radius:10px;font-size:13px;z-index:200;
+    opacity:0;transition:opacity .25s, transform .25s;box-shadow:0 8px 24px rgba(0,0,0,.4);
+    display:flex;align-items:center;gap:8px;
+  }
+  .stf-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .stf-toast .dot{width:7px;height:7px;border-radius:50%;background:var(--good);}
+
+  .stf-help{
+    background:var(--income-soft);border:1px solid #6366F133;border-radius:12px;
+    padding:14px 16px;font-size:12.5px;color:var(--ink-dim);margin-bottom:18px;line-height:1.6;
+  }
+  .stf-help b{color:var(--ink);}
+
+  .stf-lightbox{
+    position:fixed;inset:0;background:rgba(8,9,12,.88);display:none;align-items:center;justify-content:center;
+    z-index:300;padding:30px;
+  }
+  .stf-lightbox.show{display:flex;}
+  .stf-lightbox img{max-width:90vw;max-height:85vh;border-radius:10px;}
+  .stf-lightbox-close{position:absolute;top:18px;right:24px;background:var(--bg-card);border:1px solid var(--line);color:var(--ink);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:16px;}
+  .stf-lightbox-pdf{background:var(--bg-card);border-radius:12px;padding:30px;text-align:center;color:var(--ink-dim);}
+  .stf-lightbox-pdf a{color:var(--income);font-weight:600;}
+
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px;}
+</style>
+
+<div class="stf-root" id="stfRoot">
+
+  <div class="stf-topbar">
+    <div class="stf-brand">
+      <div class="stf-mark">ST</div>
+      <div class="stf-brand-text"><b>SendivTech</b><span>FINANCE LEDGER</span></div>
+    </div>
+    <div class="stf-nav" id="stfNav">
+      <button data-page="overview" class="active">Overview</button>
+      <button data-page="expenses">Company Expenses</button>
+      <button data-page="income">Client Income</button>
+    </div>
+    <div class="stf-topbar-right">
+      <div class="stf-balance-pill">Net &nbsp;<b id="stfNetPill">₹0</b></div>
+    </div>
+  </div>
+
+  <div class="stf-body">
+
+    <!-- ===================== OVERVIEW ===================== -->
+    <div class="stf-page active" id="page-overview">
+      <div class="stf-page-head">
+        <div>
+          <h1>Business overview</h1>
+          <p>Everything coming in from clients, everything going out on running the studio, and what that leaves you with.</p>
+        </div>
+        <div class="stf-actions-row">
+          <button class="stf-btn ghost small" id="exportAllBtn">Export all (.csv)</button>
+        </div>
+      </div>
+
+      <div class="stf-stat-grid">
+        <div class="stf-stat">
+          <div class="label">Total received</div>
+          <div class="value income" id="statIncome">₹0</div>
+          <div class="sub" id="statIncomeSub">from clients</div>
+        </div>
+        <div class="stf-stat">
+          <div class="label">Total spent</div>
+          <div class="value expense" id="statExpense">₹0</div>
+          <div class="sub" id="statExpenseSub">running the studio</div>
+        </div>
+        <div class="stf-stat">
+          <div class="label">Net profit</div>
+          <div class="value good" id="statProfit">₹0</div>
+          <div class="sub" id="statMargin">— margin</div>
+        </div>
+        <div class="stf-stat">
+          <div class="label">Pending from clients</div>
+          <div class="value" id="statPending" style="color:var(--warn);">₹0</div>
+          <div class="sub" id="statPendingSub">awaiting payment</div>
+        </div>
+      </div>
+
+      <div class="stf-chart-grid">
+        <div class="stf-card">
+          <h3>Income vs expenses, by month<span>The shape of your cash flow over time</span></h3>
+          <div id="monthlyChartWrap"></div>
+        </div>
+        <div class="stf-card">
+          <h3>Where the money goes<span>Expense breakdown by category</span></h3>
+          <div id="expenseDonutWrap"></div>
+        </div>
+      </div>
+
+      <div class="stf-chart-grid">
+        <div class="stf-card">
+          <h3>Revenue by service<span>Which work actually earns</span></h3>
+          <div id="serviceBarsWrap"></div>
+        </div>
+        <div class="stf-card">
+          <h3>Top clients<span>By total paid to date</span></h3>
+          <div id="topClientsWrap"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== EXPENSES ===================== -->
+    <div class="stf-page" id="page-expenses">
+      <div class="stf-page-head">
+        <div>
+          <h1>Company expenses</h1>
+          <p>What it costs to run SendivTech itself — subscriptions, tools, and anything you buy to deliver client work.</p>
+        </div>
+        <div class="stf-actions-row">
+          <button class="stf-btn ghost small" id="expCsvBtn">Import CSV</button>
+          <button class="stf-btn expense" id="addExpenseBtn">+ Add expense</button>
+        </div>
+      </div>
+
+      <div class="stf-help" id="expHelpBox">
+        <b>New to tracking this?</b> Common categories for a studio like yours: Software & subscriptions (Adobe, Figma, hosting), Domain & hosting, Stock assets, Contractor/freelancer payouts, Equipment, Marketing & ads, Bank/payment gateway fees, Other.
+      </div>
+
+      <div class="stf-ledger" id="expenseLedger">
+        <div class="stf-ledger-head">
+          <div>Date</div><div>Expense</div><div></div><div style="text-align:right;">Amount</div><div></div><div style="text-align:right;">Actions</div>
+        </div>
+        <div id="expenseRows"></div>
+      </div>
+    </div>
+
+    <!-- ===================== INCOME ===================== -->
+    <div class="stf-page" id="page-income">
+      <div class="stf-page-head">
+        <div>
+          <h1>Client income</h1>
+          <p>Every project, each payment as it comes in (advance, middle, final), and what's still pending.</p>
+        </div>
+        <div class="stf-actions-row">
+          <button class="stf-btn ghost small" id="incCsvBtn">Import CSV</button>
+          <button class="stf-btn" id="addIncomeBtn">+ Add project</button>
+        </div>
+      </div>
+
+      <div class="stf-ledger" id="incomeLedger">
+        <div class="stf-ledger-head">
+          <div>Date</div><div>Project / client</div><div></div><div style="text-align:right;">Received</div><div>Status</div><div style="text-align:right;">Actions</div>
+        </div>
+        <div id="incomeRows"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================== EXPENSE MODAL ===================== -->
+<div class="stf-overlay" id="expenseModal">
+  <div class="stf-modal">
+    <h2 id="expModalTitle">Add company expense</h2>
+    <div class="stf-field">
+      <label>What was it</label>
+      <input type="text" id="expName" placeholder="e.g. Adobe Creative Cloud">
+    </div>
+    <div class="stf-field-row">
+      <div class="stf-field">
+        <label>Amount (₹)</label>
+        <input type="number" id="expAmount" placeholder="1499">
+      </div>
+      <div class="stf-field">
+        <label>Date</label>
+        <input type="date" id="expDate">
+      </div>
+    </div>
+    <div class="stf-field">
+      <label>Category</label>
+      <select id="expCategory">
+        <option>Software & subscriptions</option>
+        <option>Domain & hosting</option>
+        <option>Stock assets</option>
+        <option>Contractor / freelancer payout</option>
+        <option>Equipment</option>
+        <option>Marketing & ads</option>
+        <option>Bank / payment gateway fees</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="stf-field">
+      <label>Note (optional)</label>
+      <input type="text" id="expNote" placeholder="e.g. for client X's video project">
+    </div>
+    <div class="stf-field">
+      <label>Receipt — image or PDF (optional)</label>
+      <div class="stf-file-zone" id="expFileZone">
+        <span id="expFileZoneLabel">Click to upload a receipt, bill screenshot, or QR/cash receipt</span>
+        <input type="file" id="expFileInput" accept="image/*,application/pdf">
+      </div>
+      <div id="expFilePreviewWrap"></div>
+    </div>
+    <div class="stf-modal-actions">
+      <button class="stf-btn ghost small" id="expCancel">Cancel</button>
+      <button class="stf-btn expense small" id="expSave">Save expense</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== INCOME MODAL ===================== -->
+<div class="stf-overlay" id="incomeModal">
+  <div class="stf-modal">
+    <h2 id="incModalTitle">Add client project</h2>
+    <div class="stf-field">
+      <label>Client name</label>
+      <input type="text" id="incClient" placeholder="e.g. Lumen Studios">
+    </div>
+    <div class="stf-field">
+      <label>Project</label>
+      <input type="text" id="incProject" placeholder="e.g. Brand website redesign">
+    </div>
+    <div class="stf-field">
+      <label>Service</label>
+      <select id="incService">
+        <option>Web Design & Development</option>
+        <option>Video Editing & Motion</option>
+        <option>Graphic & Poster Design</option>
+        <option>Multiple Services</option>
+        <option>Consultation</option>
+      </select>
+    </div>
+    <div class="stf-field">
+      <label>Total project value (₹)</label>
+      <input type="number" id="incTotal" placeholder="40000">
+    </div>
+
+    <div class="stf-field" style="margin-bottom:6px;">
+      <label>Payments received <span style="color:var(--ink-faint);font-weight:400;">(advance, middle, final — add as they come in)</span></label>
+    </div>
+    <div id="incPaymentsWrap"></div>
+    <button class="stf-btn ghost small stf-add-pay-btn" id="incAddPayBtn" type="button">+ Add a payment</button>
+    <div class="stf-pay-summary" id="incPaySummary">No payments added yet</div>
+
+    <div class="stf-modal-actions">
+      <button class="stf-btn ghost small" id="incCancel">Cancel</button>
+      <button class="stf-btn small" id="incSave">Save project</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="csvFileInput" accept=".csv" style="display:none;">
+
+<div class="stf-toast" id="stfToast"><span class="dot"></span><span id="stfToastMsg">Saved</span></div>
+
+<div class="stf-lightbox" id="stfLightbox">
+  <button class="stf-lightbox-close" id="stfLightboxClose">✕</button>
+  <div id="stfLightboxContent"></div>
+</div>
+
+<script>
+(function(){
+
+  const STORAGE_KEY_EXP = 'sendivtech:expenses';
+  const STORAGE_KEY_INC = 'sendivtech:income';
+  const MAX_PAYMENTS = 3;
+  const PAY_LABELS = ['Advance payment','Middle payment','Final payment'];
+  let expenses = [];
+  let incomes = [];
+  let pendingCsvTarget = null;
+  let editingExpenseId = null;
+  let editingIncomeId = null;
+  let expDraftReceipt = null; // {name, type, dataUrl}
+  let incPayments = []; // working array while modal open: [{amount,date,note,receipt}]
+
+  const fmt = (n) => '₹' + Math.round(n||0).toLocaleString('en-IN');
+  const today = () => new Date().toISOString().split('T')[0];
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+  function toast(msg){
+    const t = document.getElementById('stfToast');
+    document.getElementById('stfToastMsg').textContent = msg;
+    t.classList.add('show');
+    clearTimeout(window._stfToastTimer);
+    window._stfToastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+  }
+
+  function receivedOf(inc){
+    return (inc.payments||[]).reduce((s,p)=>s+(p.amount||0),0);
+  }
+  function statusOf(inc){
+    const received = receivedOf(inc);
+    if(received<=0) return {status:'pending', label:'Pending'};
+    if(received>=inc.total) return {status:'paid', label:'Paid'};
+    return {status:'partial', label:'Partial'};
+  }
+
+  // ---------------- storage ----------------
+  async function loadAll(){
+    try{
+      const e = await window.storage.get(STORAGE_KEY_EXP);
+      expenses = e ? JSON.parse(e.value) : [];
+    }catch(err){ expenses = []; }
+    try{
+      const i = await window.storage.get(STORAGE_KEY_INC);
+      incomes = i ? JSON.parse(i.value) : [];
+      incomes.forEach(x=>{ if(!x.payments) x.payments = x.received ? [{amount:x.received, date:x.date, note:'', receipt:null}] : []; });
+    }catch(err){ incomes = []; }
+    renderAll();
+  }
+
+  async function saveExpenses(){
+    try{ await window.storage.set(STORAGE_KEY_EXP, JSON.stringify(expenses)); }
+    catch(err){ toast('Could not save — try again'); }
+  }
+  async function saveIncomes(){
+    try{ await window.storage.set(STORAGE_KEY_INC, JSON.stringify(incomes)); }
+    catch(err){ toast('Could not save — try again'); }
+  }
+
+  // ---------------- nav ----------------
+  document.getElementById('stfNav').addEventListener('click', (e)=>{
+    const btn = e.target.closest('button[data-page]');
+    if(!btn) return;
+    document.querySelectorAll('#stfNav button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.stf-page').forEach(p=>p.classList.remove('active'));
+    document.getElementById('page-'+btn.dataset.page).classList.add('active');
+  });
+
+  // ---------------- file -> base64 helper ----------------
+  function fileToDataUrl(file){
+    return new Promise((resolve,reject)=>{
+      const r = new FileReader();
+      r.onload = ()=>resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  function renderFilePreview(container, fileObj, onRemove){
+    if(!fileObj){ container.innerHTML=''; return; }
+    const isImg = fileObj.type && fileObj.type.startsWith('image/');
+    container.innerHTML = `
+      <div class="stf-file-preview">
+        ${isImg ? `<img src="${fileObj.dataUrl}">` : `<div class="pdf-ic">PDF</div>`}
+        <div class="fname">${esc(fileObj.name)}</div>
+        <span class="frem" data-remove="1">✕</span>
+      </div>
+    `;
+    container.querySelector('[data-remove]').onclick = onRemove;
+  }
+
+  // ====================================================================
+  // EXPENSE MODAL (add + edit)
+  // ====================================================================
+  const expenseModal = document.getElementById('expenseModal');
+
+  function openExpenseModal(existing){
+    editingExpenseId = existing ? existing.id : null;
+    document.getElementById('expModalTitle').textContent = existing ? 'Edit company expense' : 'Add company expense';
+    document.getElementById('expName').value = existing ? existing.name : '';
+    document.getElementById('expAmount').value = existing ? existing.amount : '';
+    document.getElementById('expDate').value = existing ? existing.date : today();
+    document.getElementById('expCategory').value = existing ? existing.category : 'Software & subscriptions';
+    document.getElementById('expNote').value = existing ? (existing.note||'') : '';
+    expDraftReceipt = existing && existing.receipt ? existing.receipt : null;
+    renderFilePreview(document.getElementById('expFilePreviewWrap'), expDraftReceipt, ()=>{
+      expDraftReceipt = null;
+      renderFilePreview(document.getElementById('expFilePreviewWrap'), null, null);
+    });
+    document.getElementById('expFileInput').value = '';
+    expenseModal.classList.add('show');
+  }
+
+  document.getElementById('addExpenseBtn').onclick = ()=>openExpenseModal(null);
+  document.getElementById('expCancel').onclick = ()=>expenseModal.classList.remove('show');
+
+  document.getElementById('expFileZone').addEventListener('click', ()=>document.getElementById('expFileInput').click());
+  document.getElementById('expFileInput').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    if(file.size > 4*1024*1024){ toast('Keep receipts under 4MB'); return; }
+    const dataUrl = await fileToDataUrl(file);
+    expDraftReceipt = { name:file.name, type:file.type, dataUrl };
+    renderFilePreview(document.getElementById('expFilePreviewWrap'), expDraftReceipt, ()=>{
+      expDraftReceipt = null;
+      renderFilePreview(document.getElementById('expFilePreviewWrap'), null, null);
+    });
+  });
+
+  document.getElementById('expSave').onclick = async ()=>{
+    const name = document.getElementById('expName').value.trim();
+    const amount = parseFloat(document.getElementById('expAmount').value);
+    if(!name || !amount || amount<=0){ toast('Add a name and a valid amount'); return; }
+    const payload = {
+      name,
+      amount,
+      date: document.getElementById('expDate').value || today(),
+      category: document.getElementById('expCategory').value,
+      note: document.getElementById('expNote').value.trim(),
+      receipt: expDraftReceipt
+    };
+    if(editingExpenseId){
+      const idx = expenses.findIndex(x=>x.id===editingExpenseId);
+      if(idx>=0) expenses[idx] = {...expenses[idx], ...payload};
+      toast('Expense updated');
+    } else {
+      expenses.push({ id: uid(), ...payload });
+      toast('Expense added');
+    }
+    await saveExpenses();
+    expenseModal.classList.remove('show');
+    renderAll();
+  };
+
+  // ====================================================================
+  // INCOME MODAL (add + edit, multi-payment)
+  // ====================================================================
+  const incomeModal = document.getElementById('incomeModal');
+
+  function openIncomeModal(existing){
+    editingIncomeId = existing ? existing.id : null;
+    document.getElementById('incModalTitle').textContent = existing ? 'Edit client project' : 'Add client project';
+    document.getElementById('incClient').value = existing ? existing.client : '';
+    document.getElementById('incProject').value = existing ? (existing.project||'') : '';
+    document.getElementById('incService').value = existing ? existing.service : 'Web Design & Development';
+    document.getElementById('incTotal').value = existing ? existing.total : '';
+    incPayments = existing ? JSON.parse(JSON.stringify(existing.payments||[])) : [];
+    renderPaymentBlocks();
+    incomeModal.classList.add('show');
+  }
+
+  document.getElementById('addIncomeBtn').onclick = ()=>openIncomeModal(null);
+  document.getElementById('incCancel').onclick = ()=>incomeModal.classList.remove('show');
+
+  document.getElementById('incAddPayBtn').onclick = ()=>{
+    if(incPayments.length >= MAX_PAYMENTS){ toast('Maximum '+MAX_PAYMENTS+' payments per project'); return; }
+    incPayments.push({ amount:'', date: today(), note:'', receipt:null });
+    renderPaymentBlocks();
+  };
+
+  function renderPaymentBlocks(){
+    const wrap = document.getElementById('incPaymentsWrap');
+    if(incPayments.length===0){
+      wrap.innerHTML = `<div style="font-size:12px;color:var(--ink-faint);margin-bottom:10px;">No payments yet — click "Add a payment" below when the client pays you (advance, middle, or final).</div>`;
+    } else {
+      wrap.innerHTML = incPayments.map((p,i)=>`
+        <div class="stf-payment-block" data-idx="${i}">
+          <div class="ph">
+            <b>${PAY_LABELS[i] || ('Payment '+(i+1))}</b>
+            <button class="stf-remove-pay" data-remove-pay="${i}" type="button">Remove</button>
+          </div>
+          <div class="stf-field-row" style="margin-bottom:8px;">
+            <div class="stf-field" style="margin-bottom:0;">
+              <label>Amount (₹)</label>
+              <input type="number" data-pay-amount="${i}" value="${p.amount}" placeholder="20000">
+            </div>
+            <div class="stf-field" style="margin-bottom:0;">
+              <label>Date received</label>
+              <input type="date" data-pay-date="${i}" value="${p.date}">
+            </div>
+          </div>
+          <div class="stf-field" style="margin-bottom:8px;">
+            <label>Note (optional)</label>
+            <input type="text" data-pay-note="${i}" value="${esc(p.note||'')}" placeholder="e.g. paid via UPI">
+          </div>
+          <div class="stf-field" style="margin-bottom:0;">
+            <label>Proof — QR / cash receipt / screenshot (optional)</label>
+            <div class="stf-file-zone" data-pay-zone="${i}">
+              <span>${p.receipt ? 'Replace file' : 'Click to upload payment proof'}</span>
+              <input type="file" data-pay-file="${i}" accept="image/*,application/pdf">
+            </div>
+            <div data-pay-preview="${i}"></div>
+          </div>
+        </div>
+      `).join('');
+
+      incPayments.forEach((p,i)=>{
+        renderFilePreview(wrap.querySelector(`[data-pay-preview="${i}"]`), p.receipt, ()=>{
+          incPayments[i].receipt = null;
+          renderPaymentBlocks();
+        });
+        wrap.querySelector(`[data-pay-amount="${i}"]`).oninput = (e)=>{ incPayments[i].amount = parseFloat(e.target.value)||0; updatePaySummary(); };
+        wrap.querySelector(`[data-pay-date="${i}"]`).oninput = (e)=>{ incPayments[i].date = e.target.value; };
+        wrap.querySelector(`[data-pay-note="${i}"]`).oninput = (e)=>{ incPayments[i].note = e.target.value; };
+        wrap.querySelector(`[data-pay-zone="${i}"]`).onclick = ()=>wrap.querySelector(`[data-pay-file="${i}"]`).click();
+        wrap.querySelector(`[data-pay-file="${i}"]`).onchange = async (e)=>{
+          const file = e.target.files[0];
+          if(!file) return;
+          if(file.size > 4*1024*1024){ toast('Keep files under 4MB'); return; }
+          const dataUrl = await fileToDataUrl(file);
+          incPayments[i].receipt = { name:file.name, type:file.type, dataUrl };
+          renderPaymentBlocks();
+        };
+      });
+      wrap.querySelectorAll('[data-remove-pay]').forEach(btn=>{
+        btn.onclick = ()=>{
+          incPayments.splice(parseInt(btn.dataset.removePay),1);
+          renderPaymentBlocks();
+        };
+      });
+    }
+
+    document.getElementById('incAddPayBtn').disabled = incPayments.length >= MAX_PAYMENTS;
+    updatePaySummary();
+  }
+
+  function updatePaySummary(){
+    const total = parseFloat(document.getElementById('incTotal').value) || 0;
+    const received = incPayments.reduce((s,p)=>s+(parseFloat(p.amount)||0),0);
+    const el = document.getElementById('incPaySummary');
+    if(incPayments.length===0){ el.textContent = 'No payments added yet'; return; }
+    const pending = total - received;
+    el.textContent = `Received so far: ${fmt(received)}` + (total>0 ? `  ·  ${pending>0 ? 'Pending: '+fmt(pending) : 'Fully paid ✓'}` : '');
+  }
+  document.getElementById('incTotal').addEventListener('input', updatePaySummary);
+
+  document.getElementById('incSave').onclick = async ()=>{
+    const client = document.getElementById('incClient').value.trim();
+    const total = parseFloat(document.getElementById('incTotal').value);
+    if(!client || !total || total<=0){ toast('Add a client name and total value'); return; }
+    const cleanPayments = incPayments
+      .filter(p=>p.amount && parseFloat(p.amount)>0)
+      .map(p=>({ amount:parseFloat(p.amount), date:p.date||today(), note:p.note||'', receipt:p.receipt||null }));
+
+    const payload = {
+      client,
+      project: document.getElementById('incProject').value.trim(),
+      service: document.getElementById('incService').value,
+      total,
+      payments: cleanPayments,
+      date: cleanPayments.length ? cleanPayments[cleanPayments.length-1].date : today()
+    };
+
+    if(editingIncomeId){
+      const idx = incomes.findIndex(x=>x.id===editingIncomeId);
+      if(idx>=0) incomes[idx] = {...incomes[idx], ...payload};
+      toast('Project updated');
+    } else {
+      incomes.push({ id: uid(), ...payload });
+      toast('Project added');
+    }
+    await saveIncomes();
+    incomeModal.classList.remove('show');
+    renderAll();
+  };
+
+  // ---------------- delete ----------------
+  window.stfDeleteExpense = async (id)=>{
+    expenses = expenses.filter(x=>x.id!==id);
+    await saveExpenses();
+    toast('Expense removed');
+    renderAll();
+  };
+  window.stfDeleteIncome = async (id)=>{
+    incomes = incomes.filter(x=>x.id!==id);
+    await saveIncomes();
+    toast('Project removed');
+    renderAll();
+  };
+  window.stfEditExpense = (id)=>{
+    const x = expenses.find(e=>e.id===id);
+    if(x) openExpenseModal(x);
+  };
+  window.stfEditIncome = (id)=>{
+    const x = incomes.find(e=>e.id===id);
+    if(x) openIncomeModal(x);
+  };
+
+  // ---------------- lightbox for viewing receipts ----------------
+  const lightbox = document.getElementById('stfLightbox');
+  document.getElementById('stfLightboxClose').onclick = ()=>lightbox.classList.remove('show');
+  lightbox.addEventListener('click', (e)=>{ if(e.target===lightbox) lightbox.classList.remove('show'); });
+
+  window.stfViewReceipt = (encoded)=>{
+    const file = JSON.parse(decodeURIComponent(encoded));
+    const content = document.getElementById('stfLightboxContent');
+    if(file.type && file.type.startsWith('image/')){
+      content.innerHTML = `<img src="${file.dataUrl}">`;
+    } else {
+      content.innerHTML = `<div class="stf-lightbox-pdf">
+        <div style="font-size:30px;margin-bottom:10px;">📄</div>
+        <div style="margin-bottom:12px;">${esc(file.name)}</div>
+        <a href="${file.dataUrl}" download="${esc(file.name)}">Download / open PDF</a>
+      </div>`;
+    }
+    lightbox.classList.add('show');
+  };
+
+  function receiptChip(file){
+    if(!file) return '';
+    const enc = encodeURIComponent(JSON.stringify(file));
+    const icon = file.type && file.type.startsWith('image/') ? '🖼' : '📄';
+    return `<span class="stf-receipt-chip" onclick="stfViewReceipt('${enc}')">${icon} ${esc(file.name.length>16?file.name.slice(0,14)+'…':file.name)}</span>`;
+  }
+
+  // ---------------- CSV import ----------------
+  document.getElementById('expCsvBtn').onclick = ()=>{ pendingCsvTarget='expense'; document.getElementById('csvFileInput').click(); };
+  document.getElementById('incCsvBtn').onclick = ()=>{ pendingCsvTarget='income'; document.getElementById('csvFileInput').click(); };
+
+  document.getElementById('csvFileInput').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev)=>{
+      const text = ev.target.result;
+      const rows = parseCSV(text);
+      if(rows.length < 2){ toast('CSV looks empty'); return; }
+      const header = rows[0].map(h=>h.trim().toLowerCase());
+      let count = 0;
+
+      if(pendingCsvTarget === 'expense'){
+        const iName = header.indexOf('name')>=0?header.indexOf('name'):header.indexOf('expense');
+        const iAmt = header.indexOf('amount');
+        const iDate = header.indexOf('date');
+        const iCat = header.indexOf('category');
+        const iNote = header.indexOf('note');
+        for(let r=1;r<rows.length;r++){
+          const row = rows[r];
+          if(row.length<2) continue;
+          const amt = parseFloat(row[iAmt>=0?iAmt:1]);
+          if(!amt) continue;
+          expenses.push({
+            id: uid(),
+            name: row[iName>=0?iName:0] || 'Imported expense',
+            amount: amt,
+            date: (iDate>=0 && row[iDate]) ? row[iDate] : today(),
+            category: (iCat>=0 && row[iCat]) ? row[iCat] : 'Other',
+            note: (iNote>=0 && row[iNote]) ? row[iNote] : '',
+            receipt: null
+          });
+          count++;
+        }
+        await saveExpenses();
+      } else {
+        const iClient = header.indexOf('client');
+        const iProject = header.indexOf('project');
+        const iService = header.indexOf('service');
+        const iTotal = header.indexOf('total');
+        const iReceived = header.indexOf('received');
+        const iDate = header.indexOf('date');
+        for(let r=1;r<rows.length;r++){
+          const row = rows[r];
+          if(row.length<2) continue;
+          const total = parseFloat(row[iTotal>=0?iTotal:2]);
+          if(!total) continue;
+          const received = (iReceived>=0 && row[iReceived]) ? parseFloat(row[iReceived])||0 : 0;
+          const d = (iDate>=0 && row[iDate]) ? row[iDate] : today();
+          incomes.push({
+            id: uid(),
+            client: row[iClient>=0?iClient:0] || 'Imported client',
+            project: (iProject>=0 && row[iProject]) ? row[iProject] : '',
+            service: (iService>=0 && row[iService]) ? row[iService] : 'Multiple Services',
+            total,
+            payments: received>0 ? [{amount:received, date:d, note:'Imported', receipt:null}] : [],
+            date: d
+          });
+          count++;
+        }
+        await saveIncomes();
+      }
+      toast(count + ' row' + (count===1?'':'s') + ' imported');
+      renderAll();
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  function parseCSV(text){
+    return text.trim().split(/\r?\n/).map(line=>{
+      const out=[]; let cur=''; let inQ=false;
+      for(let i=0;i<line.length;i++){
+        const c=line[i];
+        if(c === '"'){ inQ = !inQ; continue; }
+        if(c === ',' && !inQ){ out.push(cur); cur=''; continue; }
+        cur += c;
+      }
+      out.push(cur);
+      return out.map(s=>s.trim());
+    });
+  }
+
+  // ---------------- export ----------------
+  document.getElementById('exportAllBtn').onclick = ()=>{
+    let csv = 'TYPE,DATE,NAME_OR_CLIENT,PROJECT,CATEGORY_OR_SERVICE,AMOUNT_OR_TOTAL,RECEIVED,STATUS,NOTE\n';
+    expenses.forEach(x=>{
+      csv += `Expense,${x.date},"${x.name}",,"${x.category}",${x.amount},,,"${(x.note||'').replace(/"/g,"'")}"\n`;
+    });
+    incomes.forEach(x=>{
+      const r = receivedOf(x);
+      const st = statusOf(x).label;
+      csv += `Income,${x.date},"${x.client}","${x.project||''}","${x.service}",${x.total},${r},${st},\n`;
+    });
+    const blob = new Blob([csv], {type:'text/csv'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'sendivtech-finance-export.csv';
+    a.click();
+    toast('Export started');
+  };
+
+  // ---------------- rendering ----------------
+  function renderAll(){
+    renderExpenseLedger();
+    renderIncomeLedger();
+    renderOverview();
+  }
+
+  function renderExpenseLedger(){
+    const wrap = document.getElementById('expenseRows');
+    if(expenses.length===0){
+      wrap.innerHTML = `<div class="stf-empty"><div class="glyph">○</div><b>No expenses logged yet</b><span>Add your first subscription, tool, or purchase above.</span></div>`;
+      return;
+    }
+    const sorted = [...expenses].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    wrap.innerHTML = sorted.map(x=>`
+      <div class="stf-ledger-row">
+        <div class="spine-tick expense"></div>
+        <div class="stf-ledger-date">${x.date}</div>
+        <div class="stf-ledger-main"><b>${esc(x.name)}</b>${x.note?`<span>${esc(x.note)}</span>`:''}${receiptChip(x.receipt)}</div>
+        <div><span class="stf-tag">${esc(x.category)}</span></div>
+        <div class="stf-amount expense">-${fmt(x.amount)}</div>
+        <div></div>
+        <div class="stf-row-actions">
+          <button class="stf-row-btn" onclick="stfEditExpense('${x.id}')" title="Edit">✎</button>
+          <button class="stf-row-btn del" onclick="stfDeleteExpense('${x.id}')" title="Delete">✕</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderIncomeLedger(){
+    const wrap = document.getElementById('incomeRows');
+    if(incomes.length===0){
+      wrap.innerHTML = `<div class="stf-empty"><div class="glyph">○</div><b>No client projects yet</b><span>Add a project to start tracking what's paid and what's pending.</span></div>`;
+      return;
+    }
+    const sorted = [...incomes].sort((a,b)=>new Date(b.date)-new Date(a.date));
+    wrap.innerHTML = sorted.map(x=>{
+      const received = receivedOf(x);
+      const {status, label} = statusOf(x);
+      const payList = (x.payments||[]).map((p,i)=>
+        `${PAY_LABELS[i]||('Payment '+(i+1))}: ${fmt(p.amount)} on ${p.date}${p.receipt ? ' '+receiptChip(p.receipt) : ''}`
+      ).join(' &nbsp;|&nbsp; ');
+      return `
+      <div class="stf-ledger-row" style="align-items:flex-start;">
+        <div class="spine-tick income"></div>
+        <div class="stf-ledger-date">${x.date}</div>
+        <div class="stf-ledger-main">
+          <b>${esc(x.client)}</b>
+          <span>${esc(x.project||'—')} · ${fmt(received)} of ${fmt(x.total)}</span>
+          ${payList ? `<span style="margin-top:6px;">${payList}</span>` : ''}
+        </div>
+        <div><span class="stf-tag">${esc(x.service)}</span></div>
+        <div class="stf-amount income">+${fmt(received)}</div>
+        <div><span class="stf-status-pill ${status}">${label}</span></div>
+        <div class="stf-row-actions">
+          <button class="stf-row-btn" onclick="stfEditIncome('${x.id}')" title="Edit">✎</button>
+          <button class="stf-row-btn del" onclick="stfDeleteIncome('${x.id}')" title="Delete">✕</button>
+        </div>
+      </div>
+      `;
+    }).join('');
+  }
+
+  function esc(s){
+    return String(s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+
+  // ---------------- overview + charts ----------------
+  function renderOverview(){
+    const totalIncome = incomes.reduce((s,x)=>s+receivedOf(x),0);
+    const totalPending = incomes.reduce((s,x)=>s+Math.max(0,x.total-receivedOf(x)),0);
+    const totalExpense = expenses.reduce((s,x)=>s+x.amount,0);
+    const profit = totalIncome - totalExpense;
+    const margin = totalIncome>0 ? Math.round((profit/totalIncome)*100) : 0;
+
+    document.getElementById('statIncome').textContent = fmt(totalIncome);
+    document.getElementById('statIncomeSub').textContent = incomes.length + ' project' + (incomes.length===1?'':'s');
+    document.getElementById('statExpense').textContent = fmt(totalExpense);
+    document.getElementById('statExpenseSub').textContent = expenses.length + ' transaction' + (expenses.length===1?'':'s');
+    const profitEl = document.getElementById('statProfit');
+    profitEl.textContent = (profit<0?'-':'') + fmt(Math.abs(profit));
+    profitEl.className = 'value ' + (profit>=0 ? 'good' : 'expense');
+    document.getElementById('statMargin').textContent = (totalIncome>0 ? margin+'% margin' : 'no income yet');
+    document.getElementById('statPending').textContent = fmt(totalPending);
+    document.getElementById('statPendingSub').textContent = incomes.filter(x=>x.total>receivedOf(x)).length + ' project(s) awaiting';
+
+    const netPill = document.getElementById('stfNetPill');
+    netPill.textContent = (profit<0?'-':'') + fmt(Math.abs(profit));
+    netPill.className = profit>=0 ? '' : 'neg';
+
+    renderMonthlyChart();
+    renderExpenseDonut();
+    renderServiceBars();
+    renderTopClients();
+  }
+
+  function monthKey(d){ const dt=new Date(d); return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'); }
+  function monthLabel(key){
+    const [y,m]=key.split('-');
+    return new Date(y, m-1, 1).toLocaleDateString('en-IN',{month:'short', year:'2-digit'});
+  }
+
+  function renderMonthlyChart(){
+    const wrap = document.getElementById('monthlyChartWrap');
+    const map = {};
+    incomes.forEach(x=>{
+      (x.payments||[]).forEach(p=>{
+        const k=monthKey(p.date); map[k]=map[k]||{inc:0,exp:0}; map[k].inc += p.amount;
+      });
+    });
+    expenses.forEach(x=>{ const k=monthKey(x.date); map[k]=map[k]||{inc:0,exp:0}; map[k].exp += x.amount; });
+    const keys = Object.keys(map).sort().slice(-6);
+    if(keys.length===0){
+      wrap.innerHTML = `<div class="stf-empty"><div class="glyph">▱</div><b>Nothing to chart yet</b><span>Add an expense or a project to see this fill in.</span></div>`;
+      return;
+    }
+    const maxVal = Math.max(...keys.map(k=>Math.max(map[k].inc, map[k].exp)), 1);
+    const w=560, h=200, padL=10, padB=26, padT=10;
+    const groupW = (w-padL*2)/keys.length;
+    const barW = Math.min(26, groupW*0.32);
+
+    let bars='';
+    keys.forEach((k,i)=>{
+      const cx = padL + groupW*i + groupW/2;
+      const incH = (map[k].inc/maxVal)*(h-padB-padT);
+      const expH = (map[k].exp/maxVal)*(h-padB-padT);
+      bars += `<rect x="${cx-barW-2}" y="${h-padB-incH}" width="${barW}" height="${incH}" rx="3" fill="var(--income)"></rect>`;
+      bars += `<rect x="${cx+2}" y="${h-padB-expH}" width="${barW}" height="${expH}" rx="3" fill="var(--expense)"></rect>`;
+      bars += `<text x="${cx}" y="${h-8}" text-anchor="middle" font-size="10.5" fill="var(--ink-faint)" font-family="var(--font-mono)">${monthLabel(k)}</text>`;
+    });
+
+    wrap.innerHTML = `
+      <svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto;">
+        <line x1="${padL}" y1="${h-padB}" x2="${w-padL}" y2="${h-padB}" stroke="var(--line)" stroke-width="1"/>
+        ${bars}
+      </svg>
+      <div class="stf-legend">
+        <div class="stf-legend-item"><span class="stf-legend-dot" style="background:var(--income);"></span>Income received</div>
+        <div class="stf-legend-item"><span class="stf-legend-dot" style="background:var(--expense);"></span>Expenses</div>
+      </div>
+    `;
+  }
+
+  function renderExpenseDonut(){
+    const wrap = document.getElementById('expenseDonutWrap');
+    if(expenses.length===0){
+      wrap.innerHTML = `<div class="stf-empty"><div class="glyph">◐</div><b>No expenses yet</b><span>Categories will show up here once you log some.</span></div>`;
+      return;
+    }
+    const byCat = {};
+    expenses.forEach(x=>{ byCat[x.category]=(byCat[x.category]||0)+x.amount; });
+    const palette = ['#6366F1','#F2545B','#FBBF24','#34D399','#A78BFA','#38BDF8','#FB923C','#94A3B8'];
+    const entries = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+    const total = entries.reduce((s,[,v])=>s+v,0);
+
+    const r=64, cx=80, cy=80;
+    let angle=-90, segs='';
+    entries.forEach(([cat,val],i)=>{
+      const frac = val/total;
+      const sweep = frac*360;
+      const large = sweep>180?1:0;
+      const x1 = cx + r*Math.cos(angle*Math.PI/180);
+      const y1 = cy + r*Math.sin(angle*Math.PI/180);
+      const end = angle+sweep;
+      const x2 = cx + r*Math.cos(end*Math.PI/180);
+      const y2 = cy + r*Math.sin(end*Math.PI/180);
+      segs += `<path d="M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${large} 1 ${x2.toFixed(2)},${y2.toFixed(2)} Z" fill="${palette[i%palette.length]}" opacity="0.92"/>`;
+      angle = end;
+    });
+
+    const legend = entries.map(([cat,val],i)=>`
+      <div class="stf-legend-item"><span class="stf-legend-dot" style="background:${palette[i%palette.length]};"></span>${esc(cat)} — ${fmt(val)}</div>
+    `).join('');
+
+    wrap.innerHTML = `
+      <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;">
+        <svg viewBox="0 0 160 160" style="width:140px;height:140px;flex-shrink:0;">
+          ${segs}
+          <circle cx="80" cy="80" r="38" fill="var(--bg-card)"/>
+        </svg>
+        <div style="flex:1;min-width:160px;">${legend}</div>
+      </div>
+    `;
+  }
+
+  function renderServiceBars(){
+    const wrap = document.getElementById('serviceBarsWrap');
+    if(incomes.length===0){
+      wrap.innerHTML = `<div class="stf-empty"><div class="glyph">▭</div><b>No revenue yet</b><span>Add a client project to see this breakdown.</span></div>`;
+      return;
+    }
+    const byService = {};
+    incomes.forEach(x=>{ byService[x.service]=(byService[x.service]||0)+receivedOf(x); });
+    const entries = Object.entries(byService).sort((a,b)=>b[1]-a[1]);
+    const max = Math.max(...entries.map(([,v])=>v), 1);
+    const palette = ['#6366F1','#8284F5','#A78BFA','#38BDF8','#34D399'];
+
+    wrap.innerHTML = entries.map(([svc,val],i)=>`
+      <div class="stf-bar-row">
+        <div class="bar-label">${esc(svc.replace(' & Development','').replace(' & Motion','').replace(' & Poster Design',''))}</div>
+        <div class="stf-bar-track"><div class="stf-bar-fill" style="width:${(val/max*100).toFixed(1)}%;background:${palette[i%palette.length]};"></div></div>
+        <div class="stf-bar-val">${fmt(val)}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderTopClients(){
+    const wrap = document.getElementById('topClientsWrap');
+    if(incomes.length===0){
+      wrap.innerHTML = `<div class="stf-empty"><div class="glyph">◇</div><b>No clients yet</b><span>They'll be ranked here once payments come in.</span></div>`;
+      return;
+    }
+    const byClient = {};
+    incomes.forEach(x=>{ byClient[x.client]=(byClient[x.client]||0)+receivedOf(x); });
+    const entries = Object.entries(byClient).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    const max = Math.max(...entries.map(([,v])=>v), 1);
+
+    wrap.innerHTML = entries.map(([client,val],i)=>`
+      <div class="stf-bar-row">
+        <div class="bar-label" title="${esc(client)}">${esc(client)}</div>
+        <div class="stf-bar-track"><div class="stf-bar-fill" style="width:${(val/max*100).toFixed(1)}%;background:var(--good);"></div></div>
+        <div class="stf-bar-val">${fmt(val)}</div>
+      </div>
+    `).join('');
+  }
+
+  loadAll();
+})();
+</script>
